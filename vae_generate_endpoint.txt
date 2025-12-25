@@ -1,0 +1,35 @@
+
+@app.post("/vae/generate")
+async def generate_vae_images(request: dict):
+    """
+    Generate new images from text prompt using VAE's latent space
+    
+    Args:
+        request: dict with 'prompt' (str) and 'num_samples' (int, optional, default=5)
+    """
+    try:
+        prompt = request.get('prompt', '')
+        num_samples = request.get('num_samples', 5)
+        
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt is required")
+        
+        # Get the VAE model
+        vae = await model_loader.get_model("vae")
+        
+        # Generate images
+        result = vae.generate_from_prompt(
+            prompt=prompt,
+            image_searcher=model_loader.image_searcher,
+            num_samples=num_samples
+        )
+        
+        return {
+            "success": True,
+            **result
+        }
+    
+    except Exception as e:
+        logger.error(f"Generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+
